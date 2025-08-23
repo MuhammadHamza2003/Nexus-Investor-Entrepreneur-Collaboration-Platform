@@ -45,6 +45,20 @@ public class InvestorController {
         ));
     }
     
+    @GetMapping("/meetings/entrepreneurs")
+    public ResponseEntity<?> getEntrepreneurMeetings() {
+        return ResponseEntity.ok(new AuthController.MessageResponse(
+            "Meetings with entrepreneurs - Use /api/meetings endpoint for full functionality"
+        ));
+    }
+    
+    @GetMapping("/scheduled-meetings")
+    public ResponseEntity<?> getScheduledMeetings() {
+        return ResponseEntity.ok(new AuthController.MessageResponse(
+            "Scheduled meetings for investor - Use /api/meetings/upcoming endpoint for full functionality"
+        ));
+    }
+    
     // Helper class for dashboard response
     public static class DashboardResponse {
         private String message;
