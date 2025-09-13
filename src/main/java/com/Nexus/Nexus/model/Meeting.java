@@ -44,8 +44,20 @@ public class Meeting {
     private String meetingLink; // For virtual meetings
     private String location; // For physical meetings
     
+    // Video calling specific fields
+    private String roomId; // Unique video room identifier
+    private boolean isVideoEnabled;
+    private List<String> activeParticipants; // Currently joined participants
+    private LocalDateTime actualStartTime; // When the meeting actually started
+    private LocalDateTime actualEndTime; // When the meeting actually ended
+    private Integer maxParticipants; // Maximum allowed participants
+    
     private String agenda;
     private String notes;
+    
+    // Document management fields
+    private List<String> documentIds; // Associated document IDs
+    private boolean documentsRequired; // Whether documents are required for this meeting
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -60,6 +72,8 @@ public class Meeting {
         this.organizerId = organizerId;
         this.participantIds = participantIds;
         this.status = MeetingStatus.SCHEDULED;
+        this.isVideoEnabled = true; // Default to video enabled
+        this.maxParticipants = 10; // Default max participants
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

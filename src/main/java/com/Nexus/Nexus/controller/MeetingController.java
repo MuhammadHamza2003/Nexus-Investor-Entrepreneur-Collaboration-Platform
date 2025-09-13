@@ -101,6 +101,18 @@ public class MeetingController {
         }
     }
     
+    @GetMapping("/search")
+    public ResponseEntity<?> searchMeetingsByTitle(@RequestParam("title") String title) {
+        try {
+            String userId = getCurrentUserId();
+            List<MeetingResponse> meetings = meetingService.searchMeetingsByTitle(userId, title);
+            return ResponseEntity.ok(meetings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Failed to search meetings", e.getMessage()));
+        }
+    }
+    
     @GetMapping("/{meetingId}")
     public ResponseEntity<?> getMeetingById(@PathVariable String meetingId) {
         try {

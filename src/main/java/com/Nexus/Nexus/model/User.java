@@ -98,4 +98,11 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return enabled;
     }
+    
+    /**
+     * Get full name of the user
+     */
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

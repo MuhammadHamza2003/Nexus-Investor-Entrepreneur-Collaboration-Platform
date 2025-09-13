@@ -59,6 +59,7 @@ public class WebSecurityConfig {
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/api/investor/**").hasRole("INVESTOR")
                     .requestMatchers("/api/entrepreneur/**").hasRole("ENTREPRENEUR")
+                    .requestMatchers("/api/meetings/**").hasAnyRole("INVESTOR", "ENTREPRENEUR")
                     .anyRequest().authenticated()
             );
         

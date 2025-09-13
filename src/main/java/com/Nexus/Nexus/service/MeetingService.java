@@ -201,7 +201,11 @@ public class MeetingService {
     
     public List<MeetingResponse> getUpcomingMeetings(String userId) {
         List<Meeting> meetings = meetingRepository.findUpcomingMeetings(userId, LocalDateTime.now());
+        // Defensive filter to ensure no cancelled/completed/ended slip through
         return meetings.stream()
+            .filter(m -> m.getStatus() != MeetingStatus.CANCELLED
+                      && m.getStatus() != MeetingStatus.COMPLETED
+                      && m.getStatus() != MeetingStatus.ENDED)
             .map(this::convertToResponse)
             .collect(Collectors.toList());
     }
@@ -217,6 +221,14 @@ public class MeetingService {
         }
         
         return convertToResponse(meeting);
+    }
+
+    public List<MeetingResponse> searchMeetingsByTitle(String userId, String titleQuery) {
+        if (titleQuery == null || titleQuery.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Meeting> meetings = meetingRepository.searchMeetingsByTitle(userId, titleQuery.trim());
+        return meetings.stream().map(this::convertToResponse).collect(Collectors.toList());
     }
     
     public void confirmMeeting(String meetingId, String userId) {

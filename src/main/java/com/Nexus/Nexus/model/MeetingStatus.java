@@ -6,5 +6,8 @@ public enum MeetingStatus {
     IN_PROGRESS,
     COMPLETED,
     CANCELLED,
-    RESCHEDULED
+    RESCHEDULED,
+    WAITING_FOR_HOST, // Video room created, waiting for host to join
+    LIVE, // Video call is active
+    ENDED // Video call has ended
 }

@@ -36,7 +36,7 @@ public interface MeetingRepository extends MongoRepository<Meeting, String> {
     // Find conflicting meetings for a user in a time range
     @Query("{ $and: [ " +
            "{ $or: [ { 'organizerId': ?0 }, { 'participantIds': { $in: [?0] } } ] }, " +
-           "{ 'status': { $in: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS'] } }, " +
+           "{ 'status': { $in: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'RESCHEDULED'] } }, " +
            "{ $or: [ " +
            "  { $and: [ { 'startTime': { $lt: ?2 } }, { 'endTime': { $gt: ?1 } } ] }, " +
            "  { $and: [ { 'startTime': { $gte: ?1 } }, { 'startTime': { $lt: ?2 } } ] }, " +
@@ -52,11 +52,22 @@ public interface MeetingRepository extends MongoRepository<Meeting, String> {
            "] }")
     List<Meeting> findMeetingsForDay(LocalDateTime startOfDay, LocalDateTime endOfDay);
     
-    // Find upcoming meetings for a user
+    // Find upcoming meetings for a user (includes ongoing meetings)
+    // Upcoming is defined as: future meetings with statuses SCHEDULED/CONFIRMED/RESCHEDULED
+    // OR meetings currently IN_PROGRESS regardless of startTime
     @Query("{ $and: [ " +
            "{ $or: [ { 'organizerId': ?0 }, { 'participantIds': { $in: [?0] } } ] }, " +
-           "{ 'startTime': { $gte: ?1 } }, " +
-           "{ 'status': { $in: ['SCHEDULED', 'CONFIRMED'] } } " +
+           "{ $or: [ " +
+           "  { $and: [ { 'startTime': { $gte: ?1 } }, { 'status': { $in: ['SCHEDULED', 'CONFIRMED', 'RESCHEDULED'] } } ] }, " +
+           "  { 'status': 'IN_PROGRESS' } " +
+           "] } " +
            "] }")
     List<Meeting> findUpcomingMeetings(String userId, LocalDateTime currentTime);
+
+    // Search meetings by title (case-insensitive) where the user is organizer or participant
+    @Query("{ $and: [ " +
+           "{ $or: [ { 'organizerId': ?0 }, { 'participantIds': { $in: [?0] } } ] }, " +
+           "{ 'title': { $regex: ?1, $options: 'i' } } " +
+           "] }")
+    List<Meeting> searchMeetingsByTitle(String userId, String titleQuery);
 }
