@@ -1,0 +1,102 @@
+version: "3.8"
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: nexus-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: nexus_prod
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - nexus-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/nexus_prod --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Nexus Application
+  nexus-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus-app
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      MONGODB_URI: mongodb://mongodb:27017/nexus_prod
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-nexusSecretKeyForAuthenticationAndAuthorization2024SuperSecureKeyWith512BitsMinimumRequiredForHS512AlgorithmJWTSecurityStandardCompliance}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+
+      # Server Configuration
+      PORT: 8080
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+
+      # Socket.IO Configuration
+      SOCKETIO_HOST: 0.0.0.0
+      SOCKETIO_PORT: 9092
+
+      # Payment Configuration
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_...}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_...}
+      DEFAULT_CURRENCY: USD
+      TRANSACTION_FEE: 0.029
+      FIXED_FEE: 0.30
+
+      # File Configuration
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: 10MB
+      MAX_REQUEST_SIZE: 10MB
+    ports:
+      - "8080:8080"
+      - "9092:9092"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: nexus-nginx
+    restart: unless-stopped
+    depends_on:
+      - nexus-app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - uploads_data:/var/www/uploads:ro
+    networks:
+      - nexus-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  nexus-network:
+    driver: bridge

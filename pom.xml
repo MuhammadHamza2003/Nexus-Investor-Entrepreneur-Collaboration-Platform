@@ -126,6 +126,13 @@
             <version>2.9.1</version>
         </dependency>
 
+        <!-- Stripe SDK for payment processing -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>25.12.0</version>
+        </dependency>
+
     </dependencies>
 
 	<build>
