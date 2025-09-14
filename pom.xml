@@ -126,6 +126,21 @@
             <version>2.9.1</version>
         </dependency>
 
+        <!-- Stripe SDK for payment processing -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>25.12.0</version>
+        </dependency>
+
+        <!-- Email support for 2FA - Commented out for demo -->
+        <!-- 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        -->
+
     </dependencies>
 
 	<build>
