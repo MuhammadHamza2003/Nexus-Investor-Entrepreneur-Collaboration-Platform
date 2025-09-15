@@ -1,0 +1,1 @@
+web: java -jar target/Nexus-*.jar --server.port=$PORT --spring.profiles.active=prod

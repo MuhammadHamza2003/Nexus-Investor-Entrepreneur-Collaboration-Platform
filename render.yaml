@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: nexus-api
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/Nexus-*.jar --server.port=$PORT --spring.profiles.active=prod
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: "86400000"
+      - key: SOCKETIO_HOST
+        value: "0.0.0.0"
+      - key: SOCKETIO_PORT
+        value: "9092"
+      - key: BASE_URL
+        fromService:
+          type: web
+          name: nexus-api
+          property: host
+      # Add MONGODB_URI manually in Render dashboard after creating MongoDB Atlas cluster

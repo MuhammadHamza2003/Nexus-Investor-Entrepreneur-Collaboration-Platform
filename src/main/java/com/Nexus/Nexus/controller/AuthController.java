@@ -4,6 +4,15 @@ import com.Nexus.Nexus.dto.*;
 import com.Nexus.Nexus.service.AuthService;
 import com.Nexus.Nexus.service.RateLimitService;
 import com.Nexus.Nexus.service.TwoFactorAuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
+@Tag(name = "Authentication", description = "User authentication and profile management endpoints")
 public class AuthController {
     
     @Autowired
@@ -26,6 +36,18 @@ public class AuthController {
     @Autowired
     private TwoFactorAuthService twoFactorAuthService;
     
+    @Operation(
+        summary = "Register a new user",
+        description = "Register a new user with role-based access (INVESTOR or ENTREPRENEUR). Returns JWT token upon successful registration."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User registered successfully", 
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Registration failed - Invalid input data",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "429", description = "Too many registration attempts",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))
+    })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest, 
                                         HttpServletRequest request) {
@@ -46,6 +68,18 @@ public class AuthController {
         }
     }
     
+    @Operation(
+        summary = "Authenticate user",
+        description = "Authenticate user with username/email and password. Returns JWT token upon successful authentication."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User authenticated successfully", 
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Authentication failed - Invalid credentials",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "429", description = "Too many login attempts",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))
+    })
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
                                             HttpServletRequest request) {
@@ -66,6 +100,19 @@ public class AuthController {
         }
     }
     
+    @Operation(
+        summary = "Get current user profile",
+        description = "Retrieve the profile information of the currently authenticated user",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Profile retrieved successfully", 
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))
+    })
     @GetMapping("/profile")
     @PreAuthorize("hasRole('INVESTOR') or hasRole('ENTREPRENEUR')")
     public ResponseEntity<?> getUserProfile() {
@@ -78,6 +125,21 @@ public class AuthController {
         }
     }
     
+    @Operation(
+        summary = "Update user profile",
+        description = "Update the profile information of the currently authenticated user. All fields are optional.",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Profile updated successfully", 
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Bad request - Invalid input data",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))
+    })
     @PutMapping("/profile")
     @PreAuthorize("hasRole('INVESTOR') or hasRole('ENTREPRENEUR')")
     public ResponseEntity<?> updateUserProfile(@Valid @RequestBody ProfileUpdateRequest updateRequest) {
@@ -135,20 +197,4 @@ public class AuthController {
         }
     }
     
-    // Helper class for simple message responses
-    public static class MessageResponse {
-        private String message;
-        
-        public MessageResponse(String message) {
-            this.message = message;
-        }
-        
-        public String getMessage() {
-            return message;
-        }
-        
-        public void setMessage(String message) {
-            this.message = message;
-        }
-    }
 }
